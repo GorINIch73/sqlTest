@@ -297,7 +297,7 @@ void MainWidget::on_pushButtonPrntPdf_clicked()
     document.print(&printer);
 
     // откровем созданный отчет
-    QDesktopServices::openUrl(QUrl(QUrl::fromLocalFile("d:/Qt/Project/test2.pdf")));
+    QDesktopServices::openUrl(QUrl(QUrl::fromLocalFile("../office/test2.pdf")));
 
 
 }
