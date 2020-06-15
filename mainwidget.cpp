@@ -24,7 +24,7 @@ MainWidget::MainWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    DatabaseName = "d:/Qt/Project/db/office.db";
+    DatabaseName = "../office/office.db";
 
     //проверяем на наличие файл базы
     if(!QFile(DatabaseName).exists()){
@@ -291,7 +291,7 @@ void MainWidget::on_pushButtonPrntPdf_clicked()
     QPrinter printer(QPrinter::PrinterResolution);
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setPaperSize(QPrinter::A4);
-    printer.setOutputFileName("d:/Qt/Project/test2.pdf");
+    printer.setOutputFileName("../office/test2.pdf");
     printer.setPageMargins(QMarginsF(15, 15, 15, 15));
 
     document.print(&printer);
