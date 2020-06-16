@@ -21,6 +21,7 @@ public:
     MainWidget(QWidget *parent = nullptr);
     ~MainWidget();
 
+
 private slots:
     void on_pushButton_AddDepartment_clicked();
 
@@ -48,6 +49,8 @@ private slots:
 
     void on_pushButtonSex_clicked();
 
+    void on_pushButtonSetup_clicked();
+
 private:
 
     Ui::MainWidget *ui;
@@ -56,6 +59,9 @@ private:
     QSqlDatabase db;
     QSqlTableModel *modelDepartment;
     QSqlRelationalTableModel *modelWorkers;
+
+    void OpenBase();
+    void SetupTable();
 
 
 };

@@ -18,15 +18,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     editsexform.cpp \
     main.cpp \
-    mainwidget.cpp
+    mainwidget.cpp \
+    setupform.cpp
 
 HEADERS += \
     editsexform.h \
-    mainwidget.h
+    mainwidget.h \
+    setupform.h
 
 FORMS += \
     editsexform.ui \
-    mainwidget.ui
+    mainwidget.ui \
+    setupform.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

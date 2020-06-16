@@ -14,8 +14,10 @@
 #include <QPainter>
 
 #include <QDesktopServices>
+#include <QSettings>
 
 #include "editsexform.h"
+#include "setupform.h"
 
 
 MainWidget::MainWidget(QWidget *parent)
@@ -24,11 +26,40 @@ MainWidget::MainWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    DatabaseName = "../office/office.db";
+    //не получилось выделение памяти здеси, а настройка в процедуре
+    // таблвьювы получаются пустые
+    //modelDepartment = nullptr;
+    //modelWorkers = nullptr;
+
+    OpenBase();
+
+    modelDepartment = new QSqlTableModel(this);
+    modelWorkers = new QSqlRelationalTableModel(this);
+
+    SetupTable();
+    modelDepartment->select();
+    modelWorkers->select();
+
+//    QSqlQuery query;
+//    query.exec("SELECT * FROM department");
+//    while (query.next()) {
+//        qDebug() << query.value(0).toString() << query.value(1).toString();
+//    }
+
+}
+
+void MainWidget::OpenBase()
+{
+    // читаем из настроек имя базы
+    QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
+
+    //DatabaseName = "../office/office.db";
+     DatabaseName = settings.value(SETTINGS_BASE_NAME, "").toString();
 
     //проверяем на наличие файл базы
     if(!QFile(DatabaseName).exists()){
         qDebug() << "Файла базы нет!";
+        this->setWindowTitle(tr("Файла базы нет!"));
         return;
     }
 
@@ -38,16 +69,29 @@ MainWidget::MainWidget(QWidget *parent)
     db.setDatabaseName(DatabaseName);
     if(!db.open()){
       qDebug() << "Ошибка открытия базы!";
+      this->setWindowTitle("Error!");
       return;
     }
+    // титульный окна имя базы
+    this->setWindowTitle(DatabaseName);
 
+}
 
-// Таблица отделов
-    modelDepartment = new QSqlTableModel(this);
+void MainWidget::SetupTable()
+{
+    // если не пустые очищаем память (по другому не получилось)
+//    if (modelWorkers != nullptr) delete modelWorkers;
+//    if (modelDepartment != nullptr) delete modelDepartment;
+
+//    modelDepartment = new QSqlTableModel(this);
+//    modelWorkers = new QSqlRelationalTableModel(this);
+
+ //Таблица отделов
+
     modelDepartment->setTable("department");
     // названия колонок
     modelDepartment->setHeaderData(1,Qt::Horizontal,"Название отдела");
-    modelDepartment->select();
+    //modelDepartment->select();
     ui->tableView_Department->setModel(modelDepartment);
     //ui->tableView_Department->setColumnHidden(0, true);    // Скрываем колонку с id записей
     //ui->tableView_Department->setEditTriggers(QAbstractItemView::NoEditTriggers);  //запрет редактирования
@@ -57,8 +101,7 @@ MainWidget::MainWidget(QWidget *parent)
     ui->tableView_Department->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
 
 
-// Таблица работников
-    modelWorkers = new QSqlRelationalTableModel(this);
+ //Таблица работников
 
     modelWorkers->setTable("workers");
     modelWorkers->setRelation(4, QSqlRelation("department", "ID", "Name"));
@@ -70,7 +113,7 @@ MainWidget::MainWidget(QWidget *parent)
     modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
     modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
 
-    modelWorkers->select();
+    //modelWorkers->select();
     ui->tableView_Workers->setModel(modelWorkers);
     ui->tableView_Workers->setItemDelegate(new QSqlRelationalDelegate(ui->tableView_Workers));
 
@@ -79,17 +122,16 @@ MainWidget::MainWidget(QWidget *parent)
     ui->tableView_Workers->horizontalHeader()->setStretchLastSection(true);
     ui->tableView_Workers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
 
-//    QSqlQuery query;
-//    query.exec("SELECT * FROM department");
-//    while (query.next()) {
-//        qDebug() << query.value(0).toString() << query.value(1).toString();
-//    }
-
 }
+
+
 
 MainWidget::~MainWidget()
 {
+    delete modelWorkers;
+    delete modelDepartment;
     delete ui;
+    db.close();
 }
 
 
@@ -310,3 +352,14 @@ void MainWidget::on_pushButtonSex_clicked()
 
 
 }
+
+void MainWidget::on_pushButtonSetup_clicked()
+{
+    SetupForm dial(this);
+    dial.exec();
+    OpenBase();
+    modelDepartment->select();
+    modelWorkers->select();
+
+}
+
