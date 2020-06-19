@@ -98,13 +98,6 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QPushButton" name="pushButtonNew">
-       <property name="text">
-        <string>NewBase</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="pushButtonCreateTable">
        <property name="text">
         <string>Create table</string>

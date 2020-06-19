@@ -141,7 +141,13 @@ void MainWidget::on_pushButton_AddDepartment_clicked()
     modelDepartment->insertRow(row);
     ui->tableView_Department->selectRow(row);
     ui->tableView_Department->setFocus();
-    //model->submitAll();
+    modelDepartment->submitAll();
+    //обновляем работников
+    //modelWorkers->select();
+    //modelWorkers->submitAll();
+    //modelWorkers->fetchMore();
+    //ui->tableView_Workers->update();
+    //ui->tableView_Workers->
 }
 
 void MainWidget::on_pushButton_DelDepartment_clicked()
@@ -160,6 +166,9 @@ void MainWidget::on_pushButton_AddWorkers_clicked()
     modelWorkers->insertRow(row);
     ui->tableView_Workers->selectRow(row);
     ui->tableView_Workers->setFocus();
+    //modelWorkers->select();
+    //modelWorkers->submitAll();
+    //ui->tableView_Workers->update();
 }
 
 void MainWidget::on_pushButton_DelWorkers_clicked()
@@ -175,13 +184,32 @@ void MainWidget::on_pushButton_DelWorkers_clicked()
 void MainWidget::on_pushButton_Re_clicked()
 {
     int ii=ui->tableView_Department->currentIndex().row();
+    modelDepartment->submitAll();
     modelDepartment->select();
     ui->tableView_Department->selectRow(ii);
 
-    ii=ui->tableView_Workers->currentIndex().row();
-    modelWorkers->select();
-    ui->tableView_Workers->selectRow(ii);
 
+    modelWorkers->submitAll();
+    modelWorkers->select();
+
+    //modelWorkers->relationModel()
+
+    //ii=ui->tableView_Workers->currentIndex().row();
+    //modelWorkers->select();
+    //ui->tableView_Workers->selectRow(ii);
+    //modelWorkers->submitAll();
+
+//    modelWorkers->setTable("workers");
+//    modelWorkers->setRelation(4, QSqlRelation("department", "ID", "Name"));
+
+//    modelWorkers->setRelation(3, QSqlRelation("sex", "ID", "Name"));
+//    // названия колонок
+//    modelWorkers->setHeaderData(1,Qt::Horizontal,"ФИО");
+//    modelWorkers->setHeaderData(2,Qt::Horizontal,"Возраст");
+//    modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
+//    modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
+
+//    modelWorkers->select();
 
 }
 

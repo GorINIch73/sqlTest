@@ -79,6 +79,8 @@ void EditSexForm::on_pushButton_Add_clicked()
 {
     int row=model->rowCount();
     model->insertRow(row);
+    model->submit();
+    //model->submitAll();
     ui->tableView->selectRow(row);
     mapper->toLast();
     ui->lineEdit_Name->setFocus();

@@ -27,6 +27,10 @@ private slots:
 
     void on_pushButtonClose_clicked();
 
+    void on_pushButtonCreateTable_clicked();
+
+    void on_pushButtonClear_clicked();
+
 private:
     Ui::SetupForm *ui;
 
