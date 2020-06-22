@@ -17,6 +17,13 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
+      <widget class="QPushButton" name="pushButtonEdit">
+       <property name="text">
+        <string>Edit</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="pushButton_First">
        <property name="text">
         <string>&lt;&lt;</string>
@@ -102,7 +109,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QLineEdit" name="lineEdit_FLT"/>
+   </item>
+   <item>
     <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QTableView" name="tableView"/>
+     </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
@@ -164,15 +177,11 @@
      </item>
     </layout>
    </item>
-   <item>
-    <widget class="QTableView" name="tableView"/>
-   </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>lineEdit_Name</tabstop>
   <tabstop>lineEdit_Note</tabstop>
-  <tabstop>tableView</tabstop>
   <tabstop>lineEdit_ID</tabstop>
   <tabstop>pushButton_Close</tabstop>
   <tabstop>pushButton_Add</tabstop>

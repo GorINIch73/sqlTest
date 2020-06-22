@@ -39,6 +39,14 @@ private slots:
 
 
 
+    void on_lineEdit_Note_editingFinished();
+
+    void on_tableView_doubleClicked(const QModelIndex &index);
+
+    void on_pushButtonEdit_clicked();
+
+    void on_lineEdit_FLT_textChanged(const QString &arg1);
+
 private:
     Ui::EditSexForm *ui;
     QSqlTableModel *model;

@@ -59,9 +59,12 @@ private:
     QSqlDatabase db;
     QSqlTableModel *modelDepartment;
     QSqlRelationalTableModel *modelWorkers;
+    QSqlRelationalDelegate *Workers_d;
 
     void OpenBase();
     void SetupTable();
+    void SetupDepartment();
+    void SetupWorkers();
 
 
 };

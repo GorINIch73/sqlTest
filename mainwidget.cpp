@@ -35,8 +35,12 @@ MainWidget::MainWidget(QWidget *parent)
 
     modelDepartment = new QSqlTableModel(this);
     modelWorkers = new QSqlRelationalTableModel(this);
+    Workers_d = new QSqlRelationalDelegate(this);
 
-    SetupTable();
+    //SetupTable();
+    SetupDepartment();
+    SetupWorkers();
+
     modelDepartment->select();
     modelWorkers->select();
 
@@ -79,12 +83,6 @@ void MainWidget::OpenBase()
 
 void MainWidget::SetupTable()
 {
-    // если не пустые очищаем память (по другому не получилось)
-//    if (modelWorkers != nullptr) delete modelWorkers;
-//    if (modelDepartment != nullptr) delete modelDepartment;
-
-//    modelDepartment = new QSqlTableModel(this);
-//    modelWorkers = new QSqlRelationalTableModel(this);
 
  //Таблица отделов
 
@@ -115,12 +113,55 @@ void MainWidget::SetupTable()
 
     //modelWorkers->select();
     ui->tableView_Workers->setModel(modelWorkers);
-    ui->tableView_Workers->setItemDelegate(new QSqlRelationalDelegate(ui->tableView_Workers));
+    //rd = new QSqlRelationalDelegate(this);
+    ui->tableView_Workers->setItemDelegate(Workers_d);
 
     ui->tableView_Workers->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
     ui->tableView_Workers->setSelectionMode(QAbstractItemView::SingleSelection); // Устанавливаем режим выделения лишь одно строки в таблице
     ui->tableView_Workers->horizontalHeader()->setStretchLastSection(true);
     ui->tableView_Workers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
+
+}
+
+void MainWidget::SetupDepartment()
+{
+    //Таблица отделов
+
+    modelDepartment->setTable("department");
+    // названия колонок
+    modelDepartment->setHeaderData(1,Qt::Horizontal,"Название отдела");
+    ui->tableView_Department->setModel(modelDepartment);
+    //ui->tableView_Department->setColumnHidden(0, true);    // Скрываем колонку с id записей
+    //ui->tableView_Department->setEditTriggers(QAbstractItemView::NoEditTriggers);  //запрет редактирования
+    ui->tableView_Department->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
+    ui->tableView_Department->setSelectionMode(QAbstractItemView::SingleSelection); // Устанавливаем режим выделения лишь одно строки в таблице
+    ui->tableView_Department->horizontalHeader()->setStretchLastSection(true);
+    ui->tableView_Department->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
+
+}
+
+void MainWidget::SetupWorkers()
+{
+    //Таблица работников
+
+       modelWorkers->setTable("workers");
+       modelWorkers->setRelation(4, QSqlRelation("department", "ID", "Name"));
+
+       modelWorkers->setRelation(3, QSqlRelation("sex", "ID", "Name"));
+       // названия колонок
+       modelWorkers->setHeaderData(1,Qt::Horizontal,"ФИО");
+       modelWorkers->setHeaderData(2,Qt::Horizontal,"Возраст");
+       modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
+       modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
+
+
+       ui->tableView_Workers->setModel(modelWorkers);
+       ui->tableView_Workers->setItemDelegate(Workers_d);
+
+       ui->tableView_Workers->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
+       ui->tableView_Workers->setSelectionMode(QAbstractItemView::SingleSelection); // Устанавливаем режим выделения лишь одно строки в таблице
+       ui->tableView_Workers->horizontalHeader()->setStretchLastSection(true);
+       ui->tableView_Workers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
 
 }
 
@@ -130,6 +171,7 @@ MainWidget::~MainWidget()
 {
     delete modelWorkers;
     delete modelDepartment;
+    delete Workers_d;
     delete ui;
     db.close();
 }
@@ -162,13 +204,36 @@ void MainWidget::on_pushButton_DelDepartment_clicked()
 
 void MainWidget::on_pushButton_AddWorkers_clicked()
 {
+    //обновляем отделы
+    int ii=ui->tableView_Department->currentIndex().row();
+    modelDepartment->submitAll();
+    modelDepartment->select();
+    ui->tableView_Department->selectRow(ii);
+
+
+    //Workers_d->model
+    modelWorkers->submitAll();
+    //перенастроить работников - инче не видны новые записи
+    SetupWorkers();
+    // восстанвить фильтр по отделу
+    QString ff = QString(" department = \%1\ ").arg(modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toString());
+    modelWorkers->setFilter(ff);
+    modelWorkers->select();
+
+    // добавить новую запись
     int row=modelWorkers->rowCount();
     modelWorkers->insertRow(row);
     ui->tableView_Workers->selectRow(row);
     ui->tableView_Workers->setFocus();
-    //modelWorkers->select();
+
+    // вставдяем значение отдела
+    int tt= modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toInt();
+//    qDebug() << "ID: "<< tt;
+    modelWorkers->setData(modelWorkers->index(ui->tableView_Workers->currentIndex().row(), 4) ,tt);
+    //modelWorkers->setData(modelWorkers->index(ui->tableView_Workers->currentIndex().row(), 1) ,"test");
+
     //modelWorkers->submitAll();
-    //ui->tableView_Workers->update();
+//    ui->tableView_Workers->update();
 }
 
 void MainWidget::on_pushButton_DelWorkers_clicked()
@@ -183,33 +248,20 @@ void MainWidget::on_pushButton_DelWorkers_clicked()
 
 void MainWidget::on_pushButton_Re_clicked()
 {
-    int ii=ui->tableView_Department->currentIndex().row();
+    //  ====================================================================================================
     modelDepartment->submitAll();
+    int ii=ui->tableView_Department->currentIndex().row();
+    SetupDepartment();
     modelDepartment->select();
     ui->tableView_Department->selectRow(ii);
 
 
+
     modelWorkers->submitAll();
+    ii=ui->tableView_Workers->currentIndex().row();
+    SetupWorkers();
     modelWorkers->select();
-
-    //modelWorkers->relationModel()
-
-    //ii=ui->tableView_Workers->currentIndex().row();
-    //modelWorkers->select();
-    //ui->tableView_Workers->selectRow(ii);
-    //modelWorkers->submitAll();
-
-//    modelWorkers->setTable("workers");
-//    modelWorkers->setRelation(4, QSqlRelation("department", "ID", "Name"));
-
-//    modelWorkers->setRelation(3, QSqlRelation("sex", "ID", "Name"));
-//    // названия колонок
-//    modelWorkers->setHeaderData(1,Qt::Horizontal,"ФИО");
-//    modelWorkers->setHeaderData(2,Qt::Horizontal,"Возраст");
-//    modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
-//    modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
-
-//    modelWorkers->select();
+    ui->tableView_Workers->selectRow(ii);
 
 }
 
@@ -386,6 +438,9 @@ void MainWidget::on_pushButtonSetup_clicked()
     SetupForm dial(this);
     dial.exec();
     OpenBase();
+
+    //SetupDepartment();
+    //SetupWorkers();
     modelDepartment->select();
     modelWorkers->select();
 

@@ -45,6 +45,8 @@ EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
     connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
                  SLOT(slotSelectionChange(const QItemSelection &, const QItemSelection &)));
     //ui->lineEdit_Name->setFocus();
+    ui->pushButtonEdit->setDefault(true);
+    //ui->lineEdit_Name->set
 
 }
 
@@ -79,7 +81,7 @@ void EditSexForm::on_pushButton_Add_clicked()
 {
     int row=model->rowCount();
     model->insertRow(row);
-    model->submit();
+    model->submitAll();
     //model->submitAll();
     ui->tableView->selectRow(row);
     mapper->toLast();
@@ -100,6 +102,7 @@ void EditSexForm::on_pushButton_Previous_clicked()
 
 void EditSexForm::on_pushButton_Next_clicked()
 {
+    model->submitAll();
     ui->tableView->selectRow(ui->tableView->currentIndex().row()+1);
 }
 
@@ -108,3 +111,33 @@ void EditSexForm::on_pushButton_Last_clicked()
     ui->tableView->selectRow(model->rowCount()-1);
 }
 
+
+void EditSexForm::on_lineEdit_Note_editingFinished()
+{
+    qDebug() << "конец редактирования" << ui->lineEdit_Note->text();;
+    //model->submitAll();
+}
+
+void EditSexForm::on_tableView_doubleClicked(const QModelIndex &index)
+{
+    qDebug() << "режим редактирования";
+    ui->lineEdit_Name->setFocus();
+    model->submitAll();
+
+}
+
+void EditSexForm::on_pushButtonEdit_clicked()
+{
+    qDebug() << "режим редактирования";
+    ui->lineEdit_Name->setFocus();
+    model->submitAll();
+}
+
+void EditSexForm::on_lineEdit_FLT_textChanged(const QString &arg1)
+{
+    // фильтр
+    QString ff = QString(" %1 Like '\%%2%\' ").arg("name", arg1);
+    model->setFilter(ff);
+    model->select();
+
+}
