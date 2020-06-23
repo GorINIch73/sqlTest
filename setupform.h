@@ -31,6 +31,8 @@ private slots:
 
     void on_pushButtonClear_clicked();
 
+    void on_pushButton_Import_clicked();
+
 private:
     Ui::SetupForm *ui;
 

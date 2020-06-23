@@ -159,3 +159,12 @@ void SetupForm::on_pushButtonClear_clicked()
     QMessageBox::information(this,"Info","Операция завершена.");
 
 }
+
+void SetupForm::on_pushButton_Import_clicked()
+{
+    // подтверждение импорта
+    if(QMessageBox::Yes != QMessageBox::question(this, tr("Импорт работников!"),
+                                                 tr("Уверены в операции импорта?")))  return;
+
+
+}

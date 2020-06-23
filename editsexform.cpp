@@ -1,6 +1,7 @@
 #include "editsexform.h"
 #include "ui_editsexform.h"
 #include <QDebug>
+#include <QMessageBox>
 
 
 EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
@@ -19,9 +20,6 @@ EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
     model->setTable("sex");
     model->select();
 
-    //ui->comboBoxName->setModel(model);
-    //ui->comboBoxName->setModelColumn(1);
-
     mapper = new QDataWidgetMapper(this);
     mapper->setModel(model);
     //mapper->set
@@ -30,8 +28,6 @@ EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
     mapper->addMapping(ui->lineEdit_Note, 2);
     //mp->toFirst();
     mapper->setSubmitPolicy(QDataWidgetMapper::AutoSubmit);
-
-
 
     ui->tableView->setModel(model);
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
@@ -44,15 +40,19 @@ EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
     // сигнал изменения строки выделения в tableVew
     connect(ui->tableView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)),
                  SLOT(slotSelectionChange(const QItemSelection &, const QItemSelection &)));
-    //ui->lineEdit_Name->setFocus();
+    // Enter по умолчанию на кнопку редактирования
     ui->pushButtonEdit->setDefault(true);
-    //ui->lineEdit_Name->set
+    //устанавливаем таблицу на первую запись
+    ui->tableView->selectRow(0);
+
 
 }
 
 
 EditSexForm::~EditSexForm()
 {
+    delete mapper;
+    delete model;
     delete ui;
 }
 
@@ -72,19 +72,24 @@ void EditSexForm::on_tableView_clicked(const QModelIndex &index)
 
 void EditSexForm::slotSelectionChange(const QItemSelection &current, const QItemSelection &previous)
 {
-    // изменение строки
+    // при изменение строки в таблвьюве устанавливаем маппер на соответствующую запись
     mapper->setCurrentIndex(ui->tableView->currentIndex().row());
 }
 
 
 void EditSexForm::on_pushButton_Add_clicked()
 {
+    // добавление запись
+    // определяем количество записей
     int row=model->rowCount();
+    // вставляем следующую
     model->insertRow(row);
     model->submitAll();
-    //model->submitAll();
+    // устанавливаем курсор на строку редактирования
     ui->tableView->selectRow(row);
+    // устанавливаем маппер на ту же запись
     mapper->toLast();
+    // устанавливаем курсор на редактирование имени
     ui->lineEdit_Name->setFocus();
 }
 
@@ -114,6 +119,7 @@ void EditSexForm::on_pushButton_Last_clicked()
 
 void EditSexForm::on_lineEdit_Note_editingFinished()
 {
+    // тест
     qDebug() << "конец редактирования" << ui->lineEdit_Note->text();;
     //model->submitAll();
 }
@@ -140,4 +146,14 @@ void EditSexForm::on_lineEdit_FLT_textChanged(const QString &arg1)
     model->setFilter(ff);
     model->select();
 
+}
+
+void EditSexForm::on_pushButton_2_clicked()
+{
+    qDebug() << "Удаляем " << ui->tableView->currentIndex().row();
+    // удаляем запись
+    if(QMessageBox::Yes != QMessageBox::question(this, tr("Внимание!"),
+                                                 tr("Уверены в удалении записи?")))  return;
+
+    model->removeRow(ui->tableView->currentIndex().row());
 }

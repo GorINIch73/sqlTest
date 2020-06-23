@@ -61,7 +61,7 @@ private:
     QSqlRelationalTableModel *modelWorkers;
     QSqlRelationalDelegate *Workers_d;
 
-    void OpenBase();
+    bool OpenBase();
     void SetupTable();
     void SetupDepartment();
     void SetupWorkers();

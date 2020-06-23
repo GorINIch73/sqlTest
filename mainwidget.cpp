@@ -26,18 +26,16 @@ MainWidget::MainWidget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    //не получилось выделение памяти здеси, а настройка в процедуре
-    // таблвьювы получаются пустые
-    //modelDepartment = nullptr;
-    //modelWorkers = nullptr;
+    // повторная инициализация сбивает модели, делаем один раз
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    // открываем базу
+    if (!OpenBase()) return;
 
-    OpenBase();
-
-    modelDepartment = new QSqlTableModel(this);
-    modelWorkers = new QSqlRelationalTableModel(this);
+    modelDepartment = new QSqlTableModel(this,db);
+    modelWorkers = new QSqlRelationalTableModel(this,db);
     Workers_d = new QSqlRelationalDelegate(this);
 
-    //SetupTable();
+    //Настраиваем модели
     SetupDepartment();
     SetupWorkers();
 
@@ -52,7 +50,7 @@ MainWidget::MainWidget(QWidget *parent)
 
 }
 
-void MainWidget::OpenBase()
+bool MainWidget::OpenBase()
 {
     // читаем из настроек имя базы
     QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
@@ -63,63 +61,25 @@ void MainWidget::OpenBase()
     //проверяем на наличие файл базы
     if(!QFile(DatabaseName).exists()){
         qDebug() << "Файла базы нет!";
-        this->setWindowTitle(tr("Файла базы нет!"));
-        return;
+    //    this->setWindowTitle(tr("Файла базы нет!"));
     }
 
 // открываем базу
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    //db.setHostName(DATABASE_HOSTNAME);
+    //db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(DatabaseName);
     if(!db.open()){
       qDebug() << "Ошибка открытия базы!";
       this->setWindowTitle("Error!");
-      return;
+      return false;
     }
     // титульный окна имя базы
     this->setWindowTitle(DatabaseName);
-
+    return true;
 }
 
 void MainWidget::SetupTable()
 {
 
- //Таблица отделов
-
-    modelDepartment->setTable("department");
-    // названия колонок
-    modelDepartment->setHeaderData(1,Qt::Horizontal,"Название отдела");
-    //modelDepartment->select();
-    ui->tableView_Department->setModel(modelDepartment);
-    //ui->tableView_Department->setColumnHidden(0, true);    // Скрываем колонку с id записей
-    //ui->tableView_Department->setEditTriggers(QAbstractItemView::NoEditTriggers);  //запрет редактирования
-    ui->tableView_Department->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
-    ui->tableView_Department->setSelectionMode(QAbstractItemView::SingleSelection); // Устанавливаем режим выделения лишь одно строки в таблице
-    ui->tableView_Department->horizontalHeader()->setStretchLastSection(true);
-    ui->tableView_Department->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
-
-
- //Таблица работников
-
-    modelWorkers->setTable("workers");
-    modelWorkers->setRelation(4, QSqlRelation("department", "ID", "Name"));
-
-    modelWorkers->setRelation(3, QSqlRelation("sex", "ID", "Name"));
-    // названия колонок
-    modelWorkers->setHeaderData(1,Qt::Horizontal,"ФИО");
-    modelWorkers->setHeaderData(2,Qt::Horizontal,"Возраст");
-    modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
-    modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
-
-    //modelWorkers->select();
-    ui->tableView_Workers->setModel(modelWorkers);
-    //rd = new QSqlRelationalDelegate(this);
-    ui->tableView_Workers->setItemDelegate(Workers_d);
-
-    ui->tableView_Workers->setSelectionBehavior(QAbstractItemView::SelectRows); // Разрешаем выделение строк
-    ui->tableView_Workers->setSelectionMode(QAbstractItemView::SingleSelection); // Устанавливаем режим выделения лишь одно строки в таблице
-    ui->tableView_Workers->horizontalHeader()->setStretchLastSection(true);
-    ui->tableView_Workers->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents); // по содержимому
 
 }
 
@@ -437,10 +397,12 @@ void MainWidget::on_pushButtonSetup_clicked()
 {
     SetupForm dial(this);
     dial.exec();
+
+    db.close();
     OpenBase();
 
-    //SetupDepartment();
-    //SetupWorkers();
+    SetupDepartment();
+    SetupWorkers();
     modelDepartment->select();
     modelWorkers->select();
 
