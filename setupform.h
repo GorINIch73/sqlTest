@@ -2,6 +2,7 @@
 #define SETUPFORM_H
 
 #include <QDialog>
+#include <QSqlDatabase>
 
 
 /* Defining */
@@ -35,6 +36,7 @@ private slots:
 
 private:
     Ui::SetupForm *ui;
+    //QSqlDatabase dbm;
 
     // QString BaseName;
 

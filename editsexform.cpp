@@ -11,12 +11,12 @@ EditSexForm::EditSexForm(QSqlDatabase db, QWidget *parent):
     ui->setupUi(this);
 
 
-    if(!db.open()){
+    if(!db.isOpen()){
         qDebug() << "база не открыта!";
         return;
     }
 
-    model= new QSqlTableModel(this);
+    model= new QSqlTableModel(this,db);
     model->setTable("sex");
     model->select();
 

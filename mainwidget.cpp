@@ -15,6 +15,9 @@
 
 #include <QDesktopServices>
 #include <QSettings>
+#include <QSqlQuery>
+#include <QSqlError>
+
 
 #include "editsexform.h"
 #include "setupform.h"
@@ -27,7 +30,7 @@ MainWidget::MainWidget(QWidget *parent)
     ui->setupUi(this);
 
     // повторная инициализация сбивает модели, делаем один раз
-    db = QSqlDatabase::addDatabase("QSQLITE");
+    db = QSqlDatabase::addDatabase("QSQLITE","main");
     // открываем базу
     if (!OpenBase()) return;
 
@@ -176,7 +179,7 @@ void MainWidget::on_pushButton_AddWorkers_clicked()
     //перенастроить работников - инче не видны новые записи
     SetupWorkers();
     // восстанвить фильтр по отделу
-    QString ff = QString(" department = \%1\ ").arg(modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toString());
+    QString ff = QString(" department = \%1 ").arg(modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toString());
     modelWorkers->setFilter(ff);
     modelWorkers->select();
 
@@ -188,12 +191,9 @@ void MainWidget::on_pushButton_AddWorkers_clicked()
 
     // вставдяем значение отдела
     int tt= modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toInt();
-//    qDebug() << "ID: "<< tt;
-    modelWorkers->setData(modelWorkers->index(ui->tableView_Workers->currentIndex().row(), 4) ,tt);
-    //modelWorkers->setData(modelWorkers->index(ui->tableView_Workers->currentIndex().row(), 1) ,"test");
 
-    //modelWorkers->submitAll();
-//    ui->tableView_Workers->update();
+    modelWorkers->setData(modelWorkers->index(ui->tableView_Workers->currentIndex().row(), 4) ,tt);
+
 }
 
 void MainWidget::on_pushButton_DelWorkers_clicked()
@@ -236,7 +236,7 @@ void MainWidget::on_tableView_Department_clicked(const QModelIndex &index)
     //int row = ui->tableView_Department->currentIndex().row();
     //QString ff = QString(" department = \%1\ ").arg(modelDepartment->data(modelDepartment->index(ui->tableView_Department->currentIndex().row(), 0)).toString());
 
-    QString ff = QString(" department = \%1\ ").arg(modelDepartment->data(modelDepartment->index(index.row(), 0)).toString());
+    QString ff = QString(" department = \%1 ").arg(modelDepartment->data(modelDepartment->index(index.row(), 0)).toString());
 
 
     modelWorkers->setFilter(ff);
@@ -265,15 +265,29 @@ void MainWidget::on_pushButtonPrint_clicked()
 {
     // формирование и печать
 
-    // нужно создать отдельный запрос для печати
-    // мы используем отображение Работников
-
     QString stringStream;
     QTextStream out(&stringStream);
 
     int rowCount = ui->tableView_Workers->model()->rowCount(); //количество строк
     int columnCount = ui->tableView_Workers->model()->columnCount(); //количество столбцов
 
+    // запрос
+    // база открыта?
+    if(!db.isOpen()){
+          qDebug() << "База не открыта!";
+          QMessageBox::critical(this,"Error","База не открыта!");
+          return;
+    }
+
+    QSqlQuery a_query = QSqlQuery(db);
+    QString query = "SELECT";
+    if (!a_query.exec(query)) {
+         qDebug() << "Ошибка запроса отчета: " << a_query.lastError().text();
+         return;
+    }
+
+
+    // формирование отчета
     out << "<html>\n" << "<head>\n" << "meta Content=\"Text/html;charsrt=Windows-1251\">\n" <<
            QString("<title>%1</title>\n").arg("Report") <<
            "</head>\n"
@@ -294,15 +308,21 @@ void MainWidget::on_pushButtonPrint_clicked()
     }
     out << "</table>\n" << "</body>\n" << "</html>\n";
 
-    QTextDocument *document = new QTextDocument();
-    document->setHtml(stringStream);
 
-    QPrinter printer;
-    QPrintDialog *dialog = new QPrintDialog(&printer);
-    if (dialog->exec() == QDialog::Accepted) {
-        document->print(&printer);
-    }
-    delete document;
+    // печать
+    QTextDocument document;
+    document.setHtml(stringStream);
+
+    QPrinter printer(QPrinter::PrinterResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOutputFileName("rep_.pdf");
+    printer.setPageMargins(QMarginsF(15, 15, 15, 15));
+
+    document.print(&printer);
+
+    // откровем созданный отчет
+    QDesktopServices::openUrl(QUrl(QUrl::fromLocalFile("rep_.pdf")));
 
 
 
@@ -373,13 +393,13 @@ void MainWidget::on_pushButtonPrntPdf_clicked()
     QPrinter printer(QPrinter::PrinterResolution);
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setPaperSize(QPrinter::A4);
-    printer.setOutputFileName("../office/test2.pdf");
+    printer.setOutputFileName("rep_.pdf");
     printer.setPageMargins(QMarginsF(15, 15, 15, 15));
 
     document.print(&printer);
 
     // откровем созданный отчет
-    QDesktopServices::openUrl(QUrl(QUrl::fromLocalFile("../office/test2.pdf")));
+    QDesktopServices::openUrl(QUrl(QUrl::fromLocalFile("rep_.pdf")));
 
 
 }

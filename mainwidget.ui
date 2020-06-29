@@ -46,7 +46,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonPrint">
        <property name="text">
-        <string>Print</string>
+        <string>ReportZ</string>
        </property>
       </widget>
      </item>

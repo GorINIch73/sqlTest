@@ -14,6 +14,7 @@ SetupForm::SetupForm(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
     // считать из настроек имя базы
 
     QSettings settings(ORGANIZATION_NAME, APPLICATION_NAME);
@@ -64,7 +65,7 @@ void SetupForm::on_pushButtonCreateTable_clicked()
     }
 
 // открываем базу
-    QSqlDatabase dbm = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase dbm = QSqlDatabase::addDatabase("QSQLITE","set");
     dbm.setDatabaseName(baseName);
     if(!dbm.open()){
       qDebug() << "Ошибка открытия базы!";
@@ -104,6 +105,7 @@ void SetupForm::on_pushButtonCreateTable_clicked()
 
     //
     QMessageBox::information(this,"Info","Создание завершено, перезапустите приложение!");
+    dbm.close();
 }
 
 void SetupForm::on_pushButtonClear_clicked()
@@ -122,7 +124,7 @@ void SetupForm::on_pushButtonClear_clicked()
     }
 
 // открываем базу
-    QSqlDatabase dbm = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase dbm = QSqlDatabase::addDatabase("QSQLITE","new");
     dbm.setDatabaseName(baseName);
     if(!dbm.open()){
       qDebug() << "Ошибка открытия базы!";
@@ -157,14 +159,83 @@ void SetupForm::on_pushButtonClear_clicked()
 
     //
     QMessageBox::information(this,"Info","Операция завершена.");
+    dbm.close();
 
 }
 
 void SetupForm::on_pushButton_Import_clicked()
 {
     // подтверждение импорта
-    if(QMessageBox::Yes != QMessageBox::question(this, tr("Импорт работников!"),
-                                                 tr("Уверены в операции импорта?")))  return;
+//    if(QMessageBox::Yes != QMessageBox::question(this, tr("Импорт работников!"),
+//                                                 tr("Уверены в операции импорта?")))  return;
 
 
+    QString baseName = ui->lineEditBaseName->text();
+
+    //проверяем на наличие файл базы
+    if(!QFile(baseName).exists()){
+        qDebug() << "Файла базы нет!";
+        QMessageBox::information(this,"Error","Выбранной базы не существует. Удалять нечего!");
+        return;
+    }
+
+// открываем базу
+    //dbm.close();
+    QSqlDatabase dbm = QSqlDatabase::addDatabase("QSQLITE","import");
+    dbm.setDatabaseName(baseName);
+    if(!dbm.open()){
+      qDebug() << "Ошибка открытия базы!";
+      QMessageBox::critical(this,"Error",dbm.lastError().text());
+      return;
+    }
+
+
+    //
+
+    QString fileName;
+    QString sep = "\t";
+       fileName = QFileDialog::getOpenFileName(this,QString::fromUtf8("Открыть файл"), QDir::currentPath(),"Типы файлов (*.csv;*.docx;);;Все файлы (*.*)");
+       QFile file(fileName);
+       if(file.open (QIODevice::ReadOnly)){
+
+           QTextStream ts (&file);
+
+           QString tabl="workers";
+           QString describe = "name, age";
+
+           // Цикл до конца файла
+           while(!ts.atEnd()){
+               // Cтрока в которую будем формировать запросы
+               QString req = "INSERT INTO "+tabl+" ("+describe+") VALUES(";
+               // Обрезаем строку до разделителя
+               QStringList line = ts.readLine().split(sep);
+
+               qDebug() << "import: " << line;
+               // предпологается жетская структура
+               // возможно надо сделать выбор колонок для импорта или хотябы проверку названий полей
+               req.append("\""+line.at(1)+"\""); // name
+               req.append(",");
+               req.append(line.at(2)); // age
+
+//               for(int i=0; i<line.length ();i++){
+//                       req.append('"'+line.at(i)+'"');
+//                   req.append(",");
+//               }
+//               req.chop(1);
+               req.append(");");
+
+               qDebug()<<req;
+
+               QSqlQuery query(dbm);
+               if(!query.exec(req))
+               {
+                   qDebug() << "ERROR Insert " << dbm.lastError().text();
+                   return;
+               }
+
+            }
+           file.close ();
+       }
+
+       dbm.close();
 }
