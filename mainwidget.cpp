@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlRecord>
 
 
 #include "editsexform.h"
@@ -268,9 +269,6 @@ void MainWidget::on_pushButtonPrint_clicked()
     QString stringStream;
     QTextStream out(&stringStream);
 
-    int rowCount = ui->tableView_Workers->model()->rowCount(); //количество строк
-    int columnCount = ui->tableView_Workers->model()->columnCount(); //количество столбцов
-
     // запрос
     // база открыта?
     if(!db.isOpen()){
@@ -280,12 +278,11 @@ void MainWidget::on_pushButtonPrint_clicked()
     }
 
     QSqlQuery a_query = QSqlQuery(db);
-    QString query = "SELECT";
+    QString query = "SELECT workers.ID, workers.name, age, sex.name, department.name from workers inner join sex on workers.sex=sex.ID inner join department on workers.department=department.ID order by department.name";
     if (!a_query.exec(query)) {
          qDebug() << "Ошибка запроса отчета: " << a_query.lastError().text();
          return;
     }
-
 
     // формирование отчета
     out << "<html>\n" << "<head>\n" << "meta Content=\"Text/html;charsrt=Windows-1251\">\n" <<
@@ -293,22 +290,90 @@ void MainWidget::on_pushButtonPrint_clicked()
            "</head>\n"
            "<body bgcolor = #ffffff link=#5000A0>\n"
            "<table boarder = 1 cellspacing=0 celladding=2>\n";
+
+    //заголовки
     out << "<thead><tr bgcolor=#f0f0f0>";
-    for(int column = 0; column < columnCount; column++)
-        out << QString("<th>%1</th>").arg(ui->tableView_Workers->model()->headerData(column,Qt::Horizontal).toString());
+    //    int fieldNo = a_query.record().indexOf("country");
+
+       out << QString("<th> %1 </th>").arg("ID");
+       out << QString("<th> %1 </th>").arg("NAME");
+       out << QString("<th> %1 </th>").arg("age");
+       out << QString("<th> %1 </th>").arg("sex");
+       out << QString("<th> %1 </th>").arg("derartment");
+
+      //  out << QString("<th>%1</th>").arg(ui->tableView_Workers->model()->headerData(column,Qt::Horizontal).toString());
     out << "</tr></head>\n";
 
-    for(int row = 0; row < rowCount; row++){
+    // данные
+    while (a_query.next()) {
+
         out << "<tr>";
-        for(int column = 0; column < columnCount; column++){
-            QString data = ui->tableView_Workers->model()->data(ui->tableView_Workers->model()->index(row,column)).toString().simplified();
-            out <<  QString("<td bkcolor=0>%1</td>").arg((!data.isEmpty())? data:QString("&nbsp;"));
-        }
+        // поколоночно
+        out <<  QString("<td bkcolor=0>%1 </td>").arg((!a_query.value(0).toString().isEmpty())? a_query.value(0).toString():QString("&nbsp;"));
+        out <<  QString("<td bkcolor=0>%1 </td>").arg((!a_query.value(1).toString().isEmpty())? a_query.value(1).toString():QString("&nbsp;"));
+        out <<  QString("<td bkcolor=0>%1 </td>").arg((!a_query.value(2).toString().isEmpty())? a_query.value(2).toString():QString("&nbsp;"));
+        out <<  QString("<td bkcolor=0>%1 </td>").arg((!a_query.value(3).toString().isEmpty())? a_query.value(3).toString():QString("&nbsp;"));
+        out <<  QString("<td bkcolor=0>%1</td>").arg((!a_query.value(4).toString().isEmpty())? a_query.value(4).toString():QString("&nbsp;"));
+
         out << "</tr>\n";
     }
-    out << "</table>\n" << "</body>\n" << "</html>\n";
+    out << "</table>\n";
+
+    out << tr("---------------------------------------------------------------------------------------\n");
+    out << tr("<h3> По категориям </h3>\n");
+
+    //выборка департаментов
+    QSqlQuery d_query = QSqlQuery(db);
+    if (!d_query.exec("SELECT department.ID, department.name from department order by department.name")) {
+         qDebug() << "Ошибка запроса отчета: " << d_query.lastError().text();
+         return;
+    }
+
+    out << "<table boarder = 1 cellspacing=0 celladding=2>\n";
+    QSqlQuery w_query(db);
+    while (d_query.next()) {
+        out << "<tr>";
+        out <<  QString("<td bkcolor=0>%1 </td>").arg((!d_query.value(1).toString().isEmpty())? d_query.value(1).toString():QString("&nbsp;"));
+        out << "<tr>";
+        // данные работников
+        w_query.prepare("SELECT workers.name, age, sex.name  FROM workers inner join sex on workers.sex=sex.ID WHERE workers.department = :id ORDER BY workers.name");
+        w_query.bindValue(":id",d_query.value(0).toString());
+
+        if (!w_query.exec()) {
+             qDebug() << "Ошибка запроса работников: " << w_query.lastError().text();
+             return;
+        }
+        while (w_query.next()) {
+
+            out << "<tr>";
+            // поколоночно работники
+            out <<  QString("<td bkcolor=0>   </td>");
+            out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(0).toString().isEmpty())? w_query.value(0).toString():QString("&nbsp;"));
+            out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(1).toString().isEmpty())? w_query.value(1).toString():QString("&nbsp;"));
+            out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(2).toString().isEmpty())? w_query.value(2).toString():QString("&nbsp;"));
+            out << "</tr>\n";
+        }
+
+        out << "</tr\n>";
+        // расчет итогов
+        w_query.prepare("SELECT COUNT(name) FROM workers WHERE department = :id");
+        w_query.bindValue(":id",d_query.value(0).toString());
+        if (!w_query.exec()) {
+             qDebug() << "Ошибка запроса работников: " << w_query.lastError().text();
+             return;
+        }
+        w_query.next();
+        out <<  QString("<font size = 1><i>Количество работников в отделе: %1 </i></font>\n").arg(w_query.value(0).toString());
 
 
+        out << "</tr>\n";
+    }
+    out << "</table>\n";
+
+
+    out << "</body>\n" << "</html>\n";
+
+//    qDebug() << out.readAll();
     // печать
     QTextDocument document;
     document.setHtml(stringStream);
