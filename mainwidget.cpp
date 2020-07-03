@@ -117,6 +117,8 @@ void MainWidget::SetupWorkers()
        modelWorkers->setHeaderData(2,Qt::Horizontal,"Возраст");
        modelWorkers->setHeaderData(3,Qt::Horizontal,"Пол");
        modelWorkers->setHeaderData(4,Qt::Horizontal,"Отдел");
+       modelWorkers->setHeaderData(5,Qt::Horizontal,"Оклад");
+       modelWorkers->setHeaderData(6,Qt::Horizontal,"Дата приема на работу");
 
 
        ui->tableView_Workers->setModel(modelWorkers);
@@ -336,7 +338,7 @@ void MainWidget::on_pushButtonPrint_clicked()
         out <<  QString("<td bkcolor=0>%1 </td>").arg((!d_query.value(1).toString().isEmpty())? d_query.value(1).toString():QString("&nbsp;"));
         out << "<tr>";
         // данные работников
-        w_query.prepare("SELECT workers.name, age, sex.name  FROM workers inner join sex on workers.sex=sex.ID WHERE workers.department = :id ORDER BY workers.name");
+        w_query.prepare("SELECT workers.name, age, sex.name, salary, date FROM workers inner join sex on workers.sex=sex.ID WHERE workers.department = :id ORDER BY workers.name");
         w_query.bindValue(":id",d_query.value(0).toString());
 
         if (!w_query.exec()) {
@@ -351,21 +353,25 @@ void MainWidget::on_pushButtonPrint_clicked()
             out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(0).toString().isEmpty())? w_query.value(0).toString():QString("&nbsp;"));
             out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(1).toString().isEmpty())? w_query.value(1).toString():QString("&nbsp;"));
             out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(2).toString().isEmpty())? w_query.value(2).toString():QString("&nbsp;"));
+            out <<  QString("<td bkcolor=0 align=right>%1 </td>").arg((!w_query.value(3).toString().isEmpty())? w_query.value(3).toString():QString("&nbsp;"));
+            out <<  QString("<td bkcolor=0>%1 </td>").arg((!w_query.value(4).toString().isEmpty())? w_query.value(4).toString():QString("&nbsp;"));
             out << "</tr>\n";
         }
 
         out << "</tr\n>";
         // расчет итогов
-        w_query.prepare("SELECT COUNT(name) FROM workers WHERE department = :id");
+        w_query.prepare("SELECT COUNT(name), ROUND(SUM(salary),2) FROM workers WHERE department = :id");
         w_query.bindValue(":id",d_query.value(0).toString());
         if (!w_query.exec()) {
              qDebug() << "Ошибка запроса работников: " << w_query.lastError().text();
              return;
         }
         w_query.next();
-        out <<  QString("<font size = 1><i>Количество работников в отделе: %1 </i></font>\n").arg(w_query.value(0).toString());
+        out << "<font size = 1><i>";
+        out <<  QString("<td>Количество работников в отделе: %1;</td>\n").arg(w_query.value(0).toString());
+        out <<  QString("<td>сумма ЗП в отделе: %1.</td>\n").arg(w_query.value(1).toString());
 
-
+        out << "</i></font>\n";
         out << "</tr>\n";
     }
     out << "</table>\n";

@@ -98,7 +98,9 @@ void SetupForm::on_pushButtonCreateTable_clicked()
             "name       VARCHAR,"
             "age        INTEGER,"
             "sex        INTEGER REFERENCES sex (ID),"
-            "department INTEGER REFERENCES department (ID) "
+            "department INTEGER REFERENCES department (ID),"
+            "salary     DECIMAL (100, 2),"
+            "date       DATE"
             ");";
     if (!a_query.exec(str))
         qDebug() << "таблица Работников: " << a_query.lastError().text();
